@@ -100,14 +100,16 @@ export default {
       }
 
       clearTimeout(this.hoverTimeout);
+      // debounce 시간을 늘려서 작은 영토나 경계 근처에서의 깜빡임 방지
       this.hoverTimeout = setTimeout(() => {
         this.legend = country;
         this.position = country.position;
         this.$emit("hoverCountry", country);
-      }, 50);
+      }, 100);
     },
     onHoverLeaveCountry(country) {
       clearTimeout(this.hoverTimeout);
+      // debounce 시간을 늘려서 작은 영토나 경계 근처에서의 깜빡임 방지
       this.hoverTimeout = setTimeout(() => {
         if (country && this.legend.code === country.code) {
           return;
@@ -118,7 +120,7 @@ export default {
           name: null,
         };
         this.$emit("hoverLeaveCountry", country);
-      }, 50);
+      }, 150);
     },
     renderMapCSS() {
       const baseCss = getBaseCss({

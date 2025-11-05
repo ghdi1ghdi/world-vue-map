@@ -1100,6 +1100,32 @@ export default {
     
     const _this = this;
     let isOnLand = false;
+    let currentActiveCountryCode = null;
+    let mouseEnterTimeout = null;
+    let mouseLeaveTimeout = null;
+
+    // 관련 타겟이 land 요소인지 확인하는 헬퍼 함수
+    const isRelatedTargetLand = (relatedTarget) => {
+      if (!relatedTarget) return false;
+      
+      // 직접적으로 land 클래스를 가진 경우
+      if (relatedTarget.classList && relatedTarget.classList.contains("land")) {
+        return true;
+      }
+      
+      // 부모 요소들을 확인 (작은 영토에서 경계를 넘을 때)
+      let parent = relatedTarget.parentElement;
+      let depth = 0;
+      while (parent && depth < 5) {
+        if (parent.classList && parent.classList.contains("land")) {
+          return true;
+        }
+        parent = parent.parentElement;
+        depth++;
+      }
+      
+      return false;
+    };
 
     // SVG 요소에 mousemove 이벤트 추가 - 영토가 아닌 곳에 마우스가 있을 때 레전드 제거
     let mouseMoveTimeout = null;
@@ -1115,8 +1141,9 @@ export default {
         if (target === svg || target.tagName === "g" || target.tagName === "defs" || target.tagName === "svg") {
           clearTimeout(mouseMoveTimeout);
           mouseMoveTimeout = setTimeout(() => {
+            currentActiveCountryCode = null;
             _this.$emit("hoverLeaveCountry");
-          }, 50);
+          }, 150);
         }
       } else if (currentIsOnLand) {
         isOnLand = true;
@@ -1125,32 +1152,53 @@ export default {
 
     Array.from(paths).forEach((path) => {
       path.addEventListener("mouseenter", (e) => {
+        const countryCode = e.target.id;
+        
+        // 같은 국가로 다시 들어오는 경우는 무시
+        if (currentActiveCountryCode === countryCode) {
+          return;
+        }
+        
         isOnLand = true;
-        clearTimeout(mouseMoveTimeout);
-        // 마우스의 실제 화면 좌표 계산 (SVG 확대/축소 대응)
-        const svgRect = svg.getBoundingClientRect();
-        const mouseX = e.clientX - svgRect.left;
-        const mouseY = e.clientY - svgRect.top;
-        _this.$emit("hoverCountry", {
-          code: e.target.id,
-          name: e.target.attributes.title.value,
-          position: {
-            left: mouseX,
-            top: mouseY,
-          },
-        });
+        clearTimeout(mouseEnterTimeout);
+        clearTimeout(mouseLeaveTimeout);
+        
+        // debounce를 추가하여 빠른 이벤트 반복 방지
+        mouseEnterTimeout = setTimeout(() => {
+          currentActiveCountryCode = countryCode;
+          // 마우스의 실제 화면 좌표 계산 (SVG 확대/축소 대응)
+          const svgRect = svg.getBoundingClientRect();
+          const mouseX = e.clientX - svgRect.left;
+          const mouseY = e.clientY - svgRect.top;
+          _this.$emit("hoverCountry", {
+            code: countryCode,
+            name: e.target.attributes.title.value,
+            position: {
+              left: mouseX,
+              top: mouseY,
+            },
+          });
+        }, 100);
       });
       path.addEventListener("mouseleave", (e) => {
-        // relatedTarget이 다른 path 요소인지 확인
         const relatedTarget = e.relatedTarget;
-        if (!relatedTarget || !relatedTarget.classList || !relatedTarget.classList.contains("land")) {
-          // 다른 path로 이동하지 않으면 레전드 제거
-          isOnLand = false;
-          clearTimeout(mouseMoveTimeout);
-          mouseMoveTimeout = setTimeout(() => {
-            _this.$emit("hoverLeaveCountry");
-          }, 50);
+        
+        // relatedTarget이 다른 land 요소인지 확인 (부모 요소도 포함)
+        if (isRelatedTargetLand(relatedTarget)) {
+          // 다른 land로 이동하는 경우는 아무것도 하지 않음
+          return;
         }
+        
+        // 다른 path로 이동하지 않으면 레전드 제거
+        isOnLand = false;
+        clearTimeout(mouseEnterTimeout);
+        clearTimeout(mouseLeaveTimeout);
+        
+        // debounce를 추가하여 빠른 이벤트 반복 방지
+        mouseLeaveTimeout = setTimeout(() => {
+          currentActiveCountryCode = null;
+          _this.$emit("hoverLeaveCountry");
+        }, 150);
       });
     });
   },

@@ -67,6 +67,7 @@ describe("App.vue", () => {
 
     vm.onHoverCountry(country);
 
+    // debounce 시간이 100ms로 늘어났으므로 timeout을 충분히 늘림
     setTimeout(() => {
       expect(vm.legend.code).toBe("US");
       expect(vm.legend.name).toBe("United States");
@@ -74,7 +75,7 @@ describe("App.vue", () => {
       expect(vm.position.top).toBe(200);
       app.unmount();
       done();
-    }, 100);
+    }, 150);
   });
 
   it("should clear legend when onHoverLeaveCountry is called", (done) => {
@@ -90,12 +91,13 @@ describe("App.vue", () => {
 
     vm.onHoverLeaveCountry();
 
+    // debounce 시간이 150ms로 늘어났으므로 timeout을 충분히 늘림
     setTimeout(() => {
       expect(vm.legend.code).toBeNull();
       expect(vm.legend.name).toBeNull();
       app.unmount();
       done();
-    }, 100);
+    }, 200);
   });
 
   it("should not update legend if same country is hovered", () => {
