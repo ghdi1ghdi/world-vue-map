@@ -7,7 +7,20 @@ module.exports = {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
   transform: {
-    "^.+\\.js$": "<rootDir>/node_modules/babel-jest",
-    ".*\\.(vue)$": "<rootDir>/node_modules/vue-jest",
+    "^.+\\.js$": "babel-jest",
+    ".*\\.(vue)$": [
+      "@vue/vue3-jest",
+      {
+        compilerOptions: {
+          isCustomElement: (tag) => tag.startsWith("amcharts:"),
+        },
+      },
+    ],
   },
+  transformIgnorePatterns: [
+    "node_modules/(?!(@vue)/)"
+  ],
+  testEnvironment: "jsdom",
+  setupFilesAfterEnv: ["<rootDir>/test/setup.js"],
+  modulePathIgnorePatterns: ["<rootDir>/node_modules/snapdragon"],
 };

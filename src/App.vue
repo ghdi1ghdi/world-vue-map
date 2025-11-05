@@ -48,8 +48,11 @@ export default {
   name: "MapChart",
   components: { Map },
   watch: {
-    countryData() {
-      this.renderMapCSS();
+    countryData: {
+      handler() {
+        this.renderMapCSS();
+      },
+      deep: true,
     },
   },
   props: {
@@ -80,12 +83,15 @@ export default {
   },
   data() {
     return {
-      legend: legend,
-      position: position,
+      legend: { ...legend },
+      position: { ...position },
       node: document.createElement("style"),
-      chromaScale: chroma.scale([this.$props.lowColor, this.$props.highColor]),
+      chromaScale: null,
       hoverTimeout: null,
     };
+  },
+  created() {
+    this.chromaScale = chroma.scale([this.lowColor, this.highColor]);
   },
   methods: {
     onHoverCountry(country) {
@@ -115,17 +121,27 @@ export default {
       }, 50);
     },
     renderMapCSS() {
-      const baseCss = getBaseCss(this.$props);
+      const baseCss = getBaseCss({
+        defaultCountryFillColor: this.defaultCountryFillColor,
+        countryStrokeColor: this.countryStrokeColor,
+      });
       const dynamicMapCss = getDynamicMapCss(
-        this.$props.countryData,
+        this.countryData,
         this.chromaScale
       );
-      this.$data.node.innerHTML = getCombinedCssString(baseCss, dynamicMapCss);
+      this.node.innerHTML = getCombinedCssString(baseCss, dynamicMapCss);
     },
   },
   mounted() {
-    document.body.appendChild(this.$data.node);
+    if (document.body) {
+      document.body.appendChild(this.node);
+    }
     this.renderMapCSS();
+  },
+  beforeUnmount() {
+    if (this.node && this.node.parentNode) {
+      this.node.parentNode.removeChild(this.node);
+    }
   },
 };
 </script>

@@ -1084,9 +1084,20 @@
 
 <script>
 export default {
+  props: {
+    viewBox: {
+      type: String,
+      default: "0 0 1008 650",
+    },
+  },
   mounted() {
     const paths = document.getElementsByClassName("land");
     const svg = document.getElementById("map-svg");
+    
+    if (!svg) {
+      return;
+    }
+    
     const _this = this;
     let isOnLand = false;
 
