@@ -43,6 +43,7 @@ numerical value associated with it.
 
 ## Other changes
 
-Resolved the problem where the overlay box was intermittently flickering.
-
-Enhance map legend with country flags and update styling
+- Resolved the problem where the overlay box was intermittently flickering
+- Enhanced map legend with country flags and update styling
+- Improved legend positioning to work correctly with map zoom/scale
+- Legend now only appears when mouse is over actual country territories

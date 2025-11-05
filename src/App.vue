@@ -103,7 +103,7 @@ export default {
     onHoverLeaveCountry(country) {
       clearTimeout(this.hoverTimeout);
       this.hoverTimeout = setTimeout(() => {
-        if (this.legend.code === country.code) {
+        if (country && this.legend.code === country.code) {
           return;
         }
         this.legend = {

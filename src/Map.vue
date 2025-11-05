@@ -1086,21 +1086,60 @@
 export default {
   mounted() {
     const paths = document.getElementsByClassName("land");
+    const svg = document.getElementById("map-svg");
     const _this = this;
+    let isOnLand = false;
+
+    // SVG 요소에 mousemove 이벤트 추가 - 영토가 아닌 곳에 마우스가 있을 때 레전드 제거
+    let mouseMoveTimeout = null;
+    svg.addEventListener("mousemove", (e) => {
+      const target = e.target;
+      // 마우스가 영토(.land 클래스를 가진 path) 위에 있는지 확인
+      const currentIsOnLand = target.classList.contains("land");
+      
+      // 영토 위에 있지 않고, 이전에도 영토 위에 없었다면 레전드 제거
+      if (!currentIsOnLand && isOnLand) {
+        isOnLand = false;
+        // SVG 자체나 g, defs 같은 요소 위에 있을 때만 레전드 제거
+        if (target === svg || target.tagName === "g" || target.tagName === "defs" || target.tagName === "svg") {
+          clearTimeout(mouseMoveTimeout);
+          mouseMoveTimeout = setTimeout(() => {
+            _this.$emit("hoverLeaveCountry");
+          }, 50);
+        }
+      } else if (currentIsOnLand) {
+        isOnLand = true;
+      }
+    });
 
     Array.from(paths).forEach((path) => {
       path.addEventListener("mouseenter", (e) => {
+        isOnLand = true;
+        clearTimeout(mouseMoveTimeout);
+        // 마우스의 실제 화면 좌표 계산 (SVG 확대/축소 대응)
+        const svgRect = svg.getBoundingClientRect();
+        const mouseX = e.clientX - svgRect.left;
+        const mouseY = e.clientY - svgRect.top;
         _this.$emit("hoverCountry", {
           code: e.target.id,
           name: e.target.attributes.title.value,
           position: {
-            left: e.offsetX,
-            top: e.offsetY,
+            left: mouseX,
+            top: mouseY,
           },
         });
       });
       path.addEventListener("mouseleave", (e) => {
-        _this.$emit("hoverLeaveCountry");
+        // relatedTarget이 다른 path 요소인지 확인
+        const relatedTarget = e.relatedTarget;
+        if (!relatedTarget || !relatedTarget.classList || !relatedTarget.classList.contains("land")) {
+          // 다른 path로 이동하지 않으면 레전드 제거
+          isOnLand = false;
+          clearTimeout(mouseMoveTimeout);
+          mouseMoveTimeout = setTimeout(() => {
+            _this.$emit("hoverLeaveCountry");
+          }, 50);
+        }
       });
     });
   },
